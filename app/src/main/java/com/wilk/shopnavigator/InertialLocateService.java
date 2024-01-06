@@ -15,18 +15,16 @@ import androidx.annotation.Nullable;
 import java.util.Objects;
 
 public class InertialLocateService extends Service implements SensorEventListener {
-
-    private boolean isStopInertialLoc = false; // flag for whether the thread of inertial positioning is stopped
+    private Thread inertialThread;
     private float[] accNowValue = new float[3];    // storing acceleration values returned by sensor
     private float[] oriNowValue = new float[3];    // storing orientation values returned by sensor
-    private double[] accSlidingWindow = new double[31];    // sliding window of acceleration
+    private final double[] accSlidingWindow = new double[31];    // sliding window of acceleration
 
-    private static String TAG = "InertialLocateService";
+    private static final String TAG = "InertialLocateService";
 
     private static final double PI_CONST = Math.PI / 180;    // radian corresponding to 1 degree
     private static final double kConst = 0.026795089522;    // the value of k in self defined nonlinear step size algorithm
     private static final double M_L_L_CONST = 111194.926644558;
-    private Thread inertialThread;
     private SensorManager sensorManager;
     private int count = 0, stepCount = 0;
     private long startTime, endTime;
@@ -44,89 +42,104 @@ public class InertialLocateService extends Service implements SensorEventListene
 
     @Override
     public int onStartCommand(final Intent intent, int flags, int startId) {
-        inertialThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // initialize the sliding window of acceleration
-                initAccSlidingWindow();
-                // initialize parameters
-                ClientPos ClientPos = (ClientPos) Objects.requireNonNull(intent).getSerializableExtra("init_pos");
-                double step, accTempMax = 9.8, accTempMin = 9.8;
-                double posLat = ClientPos.getLatitude(), posLon = ClientPos.getLongitude();
-                boolean isStartCheckMinValue = false, isStartCheckMaxValue = true;
-                // start inertial location
-                Log.e(TAG, "开始进行惯性定位");
-                startTime = System.currentTimeMillis();
-                while (!isStopInertialLoc) {
-                    count++;
-                    // sliding window of acceleration slides forward
-                    moveAccWindow(getAccMod());
-                    if (isWalk()) {     //  The user is in motion
-                        // There is an effective peak value of acceleration in one step
-                        if (isStartCheckMaxValue && accSlidingWindow[15] > accSlidingWindow[14] &&
-                                accSlidingWindow[15] > accSlidingWindow[16] &&
-                                isEffectiveMaxValue(accSlidingWindow[15]) &&
-                                accTempMax < accSlidingWindow[15]) {
-                            accTempMax = accSlidingWindow[15];
-                            // When the effective peak value of acceleration appears for the first time,
-                            // start to detect the effective valley value of acceleration
-                            isStartCheckMinValue = true;
-                        }
-                        // There is an effective valley value of acceleration in one step
-                        if (isStartCheckMinValue && accSlidingWindow[15] < accSlidingWindow[14] &&
-                                accSlidingWindow[15] < accSlidingWindow[16] &&
-                                isEffectiveMinValue(accSlidingWindow[15]) &&
-                                accTempMin > accSlidingWindow[15]) {
-                            accTempMin = accSlidingWindow[15];
-                            // When the effective valley value of acceleration appears for the first time,
-                            // start to detect the effective peak value of acceleration
-                            isStartCheckMaxValue = false;
-                        }
-                        // When the effective valley value of acceleration has been detected,
-                        // the acceleration starts to rise,
-                        // which means that the previous step has been completed and a new step is started
-                        if (!isStartCheckMaxValue && accSlidingWindow[15] >= 9.0) {
-                            stepCount++;
-                            // Obtaining the step size of this step by self defined nonlinear step size algorithm
-                            step = getAnStepDistance(accTempMin, accTempMax);
-                            float angle = oriNowValue[0];
-                            String[] llStr = disToLL(step, posLat, posLon, angle).split(",");
-                            posLat = Double.valueOf(llStr[0]);
-                            posLon = Double.valueOf(llStr[1]);
-                            ClientPos = new ClientPos(posLat, posLon, NowClientPos.getNowFloor());
-                            Intent posIntent = new Intent("locate");
-                            posIntent.putExtra("pos_data", ClientPos);
-                            //Log.d("pos is", ClientPos.getLatitude()+" "+ClientPos.getLongitude()+" "+ClientPos.getFloor());
-                            sendBroadcast(posIntent);
-                            // Parameters initialization
-                            accTempMax = 9.8;
-                            accTempMin = 9.8;
-                            isStartCheckMaxValue = true;
-                            isStartCheckMinValue = false;
-                        }
-                    } else {    // The user is at rest
-                        posLat = NowClientPos.getNowLatitude();
-                        posLon = NowClientPos.getNowLongitude();
+        // initialize the sliding window of acceleration
+        // initialize parameters
+        // start inertial location
+        // sliding window of acceleration slides forward
+        //  The user is in motion
+        // There is an effective peak value of acceleration in one step
+        // When the effective peak value of acceleration appears for the first time,
+        // start to detect the effective valley value of acceleration
+        // There is an effective valley value of acceleration in one step
+        // When the effective valley value of acceleration appears for the first time,
+        // start to detect the effective peak value of acceleration
+        // When the effective valley value of acceleration has been detected,
+        // the acceleration starts to rise,
+        // which means that the previous step has been completed and a new step is started
+        // Obtaining the step size of this step by self defined nonlinear step size algorithm
+        //Log.d("pos is", ClientPos.getLatitude()+" "+ClientPos.getLongitude()+" "+ClientPos.getFloor());
+        // Parameters initialization
+        // The user is at rest
+        // Keep the sampling frequency of 50 Hz
+        inertialThread = new Thread(() -> {
+            // initialize the sliding window of acceleration
+            initAccSlidingWindow();
+            // initialize parameters
+            ClientPos сlientPos = (ClientPos) Objects.requireNonNull(intent).getSerializableExtra("init_pos");
+            int locateServiceNumber = intent.getIntExtra("service_number", 0);
+            double step, accTempMax = 9.8, accTempMin = 9.8;
+            double posLat = сlientPos.getLatitude(), posLon = сlientPos.getLongitude();
+            boolean isStartCheckMinValue = false, isStartCheckMaxValue = true;
+            // start inertial location
+            Log.e(TAG, "开始进行惯性定位");
+            startTime = System.currentTimeMillis();
+            while (!Thread.currentThread().isInterrupted()) {
+                count++;
+                // sliding window of acceleration slides forward
+                moveAccWindow(getAccMod());
+                if (isWalk()) {     //  The user is in motion
+                    // There is an effective peak value of acceleration in one step
+                    if (isStartCheckMaxValue && accSlidingWindow[15] > accSlidingWindow[14] &&
+                            accSlidingWindow[15] > accSlidingWindow[16] &&
+                            isEffectiveMaxValue(accSlidingWindow[15]) &&
+                            accTempMax < accSlidingWindow[15]) {
+                        accTempMax = accSlidingWindow[15];
+                        // When the effective peak value of acceleration appears for the first time,
+                        // start to detect the effective valley value of acceleration
+                        isStartCheckMinValue = true;
                     }
-                    try {   // Keep the sampling frequency of 50 Hz
-                        Thread.sleep(20);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        Log.e(TAG, "Inertial locate Wait Error:" + e.getMessage());
+                    // There is an effective valley value of acceleration in one step
+                    if (isStartCheckMinValue && accSlidingWindow[15] < accSlidingWindow[14] &&
+                            accSlidingWindow[15] < accSlidingWindow[16] &&
+                            isEffectiveMinValue(accSlidingWindow[15]) &&
+                            accTempMin > accSlidingWindow[15]) {
+                        accTempMin = accSlidingWindow[15];
+                        // When the effective valley value of acceleration appears for the first time,
+                        // start to detect the effective peak value of acceleration
+                        isStartCheckMaxValue = false;
                     }
+                    // When the effective valley value of acceleration has been detected,
+                    // the acceleration starts to rise,
+                    // which means that the previous step has been completed and a new step is started
+                    if (!isStartCheckMaxValue && accSlidingWindow[15] >= 9.0) {
+                        stepCount++;
+                        // Obtaining the step size of this step by self defined nonlinear step size algorithm
+                        step = getAnStepDistance(accTempMin, accTempMax);
+                        float angle = oriNowValue[0];
+                        String[] llStr = disToLL(step, posLat, posLon, angle).split(",");
+                        posLat = Double.valueOf(llStr[0]);
+                        posLon = Double.valueOf(llStr[1]);
+                        сlientPos = new ClientPos(posLat, posLon);
+                        Intent posIntent = new Intent("locate");
+                        posIntent.putExtra("pos_data", сlientPos);
+                        posIntent.putExtra("service_number", locateServiceNumber);
+                        //Log.d("pos is", ClientPos.getLatitude()+" "+ClientPos.getLongitude()+" "+ClientPos.getFloor());
+                        sendBroadcast(posIntent);
+                        // Parameters initialization
+                        accTempMax = 9.8;
+                        accTempMin = 9.8;
+                        isStartCheckMaxValue = true;
+                        isStartCheckMinValue = false;
+                    }
+                } else {    // The user is at rest
+                    //posLat = NowClientPos.getNowLatitude();
+                    //posLon = NowClientPos.getNowLongitude();
                 }
-                endTime = System.currentTimeMillis();
-                stopSelf();
+                try {   // Keep the sampling frequency of 50 Hz
+                    Thread.sleep(20);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                    Log.e(TAG, "Inertial locate Wait Error:" + e.getMessage());
+                }
             }
+            endTime = System.currentTimeMillis();
+            stopSelf();
         });
         inertialThread.setPriority(10);
         inertialThread.start();
         return super.onStartCommand(intent, flags, startId);
     }
-
-//    public void onHandleIntent(@Nullable Intent intent) {
-//
-//    }
 
     /**
      * Initialize the parameters of inertial location, pad the sliding window of acceleration
@@ -283,24 +296,9 @@ public class InertialLocateService extends Service implements SensorEventListene
     }
 
     @Override
-    public void onDestroy() {   // stop sub thread of inertial location
+    public void onDestroy() {
         super.onDestroy();
-        isStopInertialLoc = true;
+        inertialThread.interrupt();
         sensorManager.unregisterListener(this);
-//        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/"
-//                + "test.txt";   // 获得SD卡根目录;
-//        File file = new File(path);
-//        try {
-//            if (!file.exists()) {
-//                file.createNewFile();
-//            }
-//            FileOutputStream fileOutputStream = new FileOutputStream(file);
-//            byte[] videoSETimeByte = (count + "," + stepCount + "," + (endTime - startTime)).getBytes();
-//            fileOutputStream.write(videoSETimeByte);
-//            fileOutputStream.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        // Log.e(TAG,"已停止惯性定位");
     }
 }

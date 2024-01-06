@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">ShopNavigator</string>
+    <string name="shop_item_hint">Enter name of shop item</string>
+    <string name="save">Save item</string>
+    <string name="cancel">Cancel</string>
+    <string name="mark_zero_coordinates">Mark zero coordinates</string>
+    <string name="add_item">Add item</string>
 </resources>

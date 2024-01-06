@@ -3,7 +3,6 @@ package com.wilk.shopnavigator;
 public class NowClientPos {
     private static double nowLongitude;    // 用户当前经度
     private static double nowLatitude; // 用户当前纬度
-    private static int nowFloor;   // 楼层
 
 
     /**
@@ -24,16 +23,6 @@ public class NowClientPos {
         return nowLongitude;
     }
 
-
-    /**
-     * 获取用户当前楼层
-     *
-     * @return 用户的楼层
-     */
-    public static int getNowFloor() {
-        return nowFloor;
-    }
-
     /**
      * 设置用户当前经度
      *
@@ -51,17 +40,6 @@ public class NowClientPos {
     public static void setNowLatitude(double nowLatitude) {
         NowClientPos.nowLatitude = nowLatitude;
     }
-
-
-    /**
-     * 设置楼层
-     *
-     * @param nowFloor 楼层
-     */
-    public static void setNowFloor(int nowFloor) {
-        NowClientPos.nowFloor = nowFloor;
-    }
-
     /**
      * 设置位置参数
      *
@@ -70,6 +48,10 @@ public class NowClientPos {
     public static void setPosPara(ClientPos ClientPos) {
         NowClientPos.nowLongitude = ClientPos.getLongitude();
         NowClientPos.nowLatitude = ClientPos.getLatitude();
-        NowClientPos.nowFloor = ClientPos.getFloor();
+    }
+
+    public static void reset() {
+        setNowLongitude(0);
+        setNowLatitude(0);
     }
 }
