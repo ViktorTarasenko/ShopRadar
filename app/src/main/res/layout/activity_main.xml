@@ -27,7 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="Coordinates are: 0.00000 0.00000"
+            android:text="@string/defaults_coordinates_text"
             android:textStyle="bold"/>
 
     </LinearLayout>

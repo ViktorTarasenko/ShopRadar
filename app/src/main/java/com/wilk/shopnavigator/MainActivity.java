@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void startLocationService() {
         NowClientPos.reset();
+        distanceTextView.setText(getResources().getString(R.string.defaults_coordinates_text));
         inertialLocIntent = new Intent(MainActivity.this, InertialLocateService.class);
         ClientPos ClientPos = new ClientPos(NowClientPos.getNowLatitude(), NowClientPos.getNowLongitude());
         inertialLocIntent.putExtra("init_pos", ClientPos);

@@ -5,4 +5,5 @@
     <string name="cancel">Cancel</string>
     <string name="mark_zero_coordinates">Mark zero coordinates</string>
     <string name="add_item">Add item</string>
+    <string name="defaults_coordinates_text">Coordinates are: 0.00000 0.00000</string>
 </resources>
