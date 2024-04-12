@@ -1,4 +1,0 @@
-#Sun Feb 25 15:21:17 CET 2024
-base.0=/home/victor/ShopNavigator/android/build/intermediates/dex/debug/mergeDexDebug/classes.dex
-path.0=classes.dex
-renamed.0=classes.dex

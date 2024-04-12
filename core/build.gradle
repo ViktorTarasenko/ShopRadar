@@ -1,4 +1,8 @@
 sourceCompatibility = 1.8
+dependencies {
+    implementation project(':android')
+    implementation project(':android')
+}
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 sourceSets.main.java.srcDirs = [ "src/" ]
