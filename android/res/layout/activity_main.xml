@@ -44,14 +44,14 @@
             android:textSize="18sp"
             android:text="@string/defaults_coordinates_text"
             android:textStyle="bold"/>
-    <LinearLayout
+    <com.mygdx.game.SquareLinearLayout
         android:id="@+id/radarLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
         tools:context=".MainActivity"
         android:orientation="horizontal">
-    </LinearLayout>
+    </com.mygdx.game.SquareLinearLayout>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

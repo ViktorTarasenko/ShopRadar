@@ -61,6 +61,14 @@ project(":android") {
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
         natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86_64"
         api "com.badlogicgames.box2dlights:box2dlights:$box2DLightsVersion"
+        constraints {
+            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
+                because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
+            }
+            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
+                because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+            }
+        }
         
     }
 }

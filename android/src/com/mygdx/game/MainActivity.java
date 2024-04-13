@@ -137,7 +137,7 @@ public class MainActivity extends FragmentActivity implements AndroidFragmentApp
         locationChangedReceiver = new LocationChangedReceiver();
         IntentFilter dataIntentFilter = new IntentFilter();
         dataIntentFilter.addAction("locate");
-        registerReceiver(locationChangedReceiver, dataIntentFilter, Context.RECEIVER_NOT_EXPORTED);
+        registerReceiver(locationChangedReceiver, dataIntentFilter, RECEIVER_EXPORTED);
         startService(inertialLocIntent);
     }
 
@@ -156,6 +156,7 @@ public class MainActivity extends FragmentActivity implements AndroidFragmentApp
 
     private void restartLocationService() {
         stopLocationService();
+        Gdx.app.postRunnable(() -> shopRadarRenderer.passClientPosition(NowClientPos.getNowLatitude(), NowClientPos.getNowLongitude()));
         startLocationService();
     }
 
@@ -238,7 +239,7 @@ public class MainActivity extends FragmentActivity implements AndroidFragmentApp
 
         @Override
         public void onItemRangeRemoved(ObservableList<ShopItem> sender, int positionStart, int itemCount) {
-
+            passItemsToRenderer(sender);
         }
         private void passItemsToRenderer(final ObservableList<ShopItem> items) {
             List<ShopItemDrawable> shopItemsDrawables = items.

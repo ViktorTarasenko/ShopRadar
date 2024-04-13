@@ -12,9 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShopRadarRenderer extends ApplicationAdapter {
-    private static final int WORLD_SIZE = 5000;
     private static final int INITIAL_CAMERA_VIEWPORT = 10;
     private SpriteBatch batch;
+    private Sprite radarSprite;
     private Sprite dotSprite;
     private OrthographicCamera camera;
     private List<ShopItemDrawable> shopItemDrawables = new ArrayList<>();
@@ -29,8 +29,9 @@ public class ShopRadarRenderer extends ApplicationAdapter {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        dotSprite = new Sprite(new Texture("badlogic.jpg"));
-        dotSprite.setSize(1, 1);
+        radarSprite = new Sprite(new Texture("radar.jpg"));
+        dotSprite = new Sprite(new Texture("dot.jpg"));
+        dotSprite.setSize(0.5f, 0.5f);
         float w = Gdx.graphics.getWidth();
         float h = Gdx.graphics.getHeight();
         camera = new OrthographicCamera(INITIAL_CAMERA_VIEWPORT, INITIAL_CAMERA_VIEWPORT * (h / w));
@@ -43,8 +44,9 @@ public class ShopRadarRenderer extends ApplicationAdapter {
     public void render() {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-        Gdx.gl.glClearColor(0, 1, 0, 1);
+        ScreenUtils.clear(0, 0, 0, 1, true);
         batch.begin();
+        renderRadar();
         renderShopItemDrawables();
         batch.end();
     }
@@ -52,9 +54,14 @@ public class ShopRadarRenderer extends ApplicationAdapter {
     private void renderShopItemDrawables() {
         shopItemDrawables.forEach(shopItemDrawable -> {
 			double[] latLngMeters = relativeLatLonToMeters(50,0, shopItemDrawable.getLatitude(), shopItemDrawable.getLongitude());
-            dotSprite.setPosition((float) latLngMeters[1], (float) latLngMeters[0]);
+            dotSprite.setPosition((float) latLngMeters[1] - dotSprite.getWidth() / 2, (float) latLngMeters[0] - dotSprite.getHeight() / 2);
             dotSprite.draw(batch);
         });
+    }
+    private void renderRadar() {
+        radarSprite.setSize(camera.viewportWidth, camera.viewportHeight);//TODO!
+        radarSprite.setPosition(camera.position.x - camera.viewportWidth / 2, camera.position.y - camera.viewportHeight / 2);
+        radarSprite.draw(batch);
     }
 
     @Override
